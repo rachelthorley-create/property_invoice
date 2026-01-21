@@ -59,7 +59,7 @@
       <label>Date</label>
       <input id="invoiceDate" type="text" value="1/11/2025" />
       <label>Bill to</label>
-      <input id="billTo" type="text" value="FAO phoenixwindsori" />
+      <input id="billTo" type="text" value="FAO R Thorley" />
       <label>Pre-populated items</label>
       <select id="preset" onchange="addPreset()">
         <option value="">— choose an item —</option>
@@ -104,7 +104,7 @@
           <div class="meta">
             <div class="left">
               <div><span class="label">Invoice No:</span> <span id="lblInvoice">00000030</span></div>
-              <div style="margin-top:8px"><span class="label">Bill to:</span> <span id="lblBill">FAO phoenixwindsori</span></div>
+              <div style="margin-top:8px"><span class="label">Bill to:</span> <span id="lblBill">FAO R Thorley</span></div>
             </div>
             <div class="right">
               <div><span class="label">Date:</span> <span id="lblDate">1/11/2025</span></div>
@@ -142,7 +142,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
-    const state = {invoiceNumber:30,date:'1/11/2025',billTo:'FAO phoenixwindsori',items:[{desc:'Custom engraved plant labels. 50*37mm',qty:3,unit:5.99},{desc:'Postage',qty:1,unit:0}],discount:0};
+    const state = {invoiceNumber:30,date:'1/11/2025',billTo:'FAO R Thorley',items:[{desc:'Blank',qty:1,unit:0}],discount:0};
     const fmt=n=>'£'+Number(n).toFixed(2);
     function renderInvoice(){
       document.getElementById('lblInvoice').textContent=String(state.invoiceNumber).padStart(8,'0');
