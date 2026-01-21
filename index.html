@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Thorley Property Ltd. — Invoice Generator (Standalone)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--accent:#111;--muted:#7a7a7a;--pageW:794px;--pageH:1123px}
+    html,body{height:100%;margin:0;font-family:Montserrat,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    .app{display:flex;gap:24px;padding:20px;background:#f4f4f6;min-height:100vh;box-sizing:border-box}
+    .panel{width:360px;background:#fff;padding:18px;border-radius:8px;box-shadow:0 6px 20px rgba(12,12,12,0.06)}
+    .panel h2{margin-top:0;font-size:18px}
+    label{display:block;font-size:13px;margin:12px 0 6px;color:var(--muted)}
+    input[type=text], input[type=number], textarea, select{width:100%;padding:8px;border:1px solid #e5e5e5;border-radius:6px;font-size:14px;box-sizing:border-box}
+    textarea{min-height:72px}
+    .row{display:flex;gap:8px}
+    .row > *{flex:1}
+    button{background:#111;color:#fff;border:0;padding:10px 12px;border-radius:6px;cursor:pointer}
+    .btn-ghost{background:#fff;border:1px solid #ddd;color:#111}
+    .muted{color:var(--muted);font-size:13px}
+    .small{font-size:12px}
+    .canvas-wrap{flex:1;display:flex;justify-content:center;align-items:flex-start;padding:20px}
+    .page{width:calc(var(--pageW));height:calc(var(--pageH));background:#fff;position:relative;box-shadow:0 10px 30px rgba(10,10,10,0.08);overflow:hidden}
+    .bgsvg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+    .content{position:relative;padding:72px 80px;color:#111;line-height:1.6}
+    .logo{position:absolute;right:80px;top:60px;text-align:right}
+    .logo h1{margin:0;font-size:28px;letter-spacing:0.3px}
+    .company-meta{font-size:12px;color:var(--muted);margin-top:6px}
+    .big-title{font-size:96px;letter-spacing:6px;color:#0b0b0b;margin:72px 0}
+    .meta{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px}
+    .meta .left{min-width:320px}
+    .meta .label{font-weight:700}
+    table.items{width:100%;border-collapse:collapse;margin-top:24px}
+    table.items thead td{font-weight:700;padding:10px 6px;border-bottom:2px dotted rgba(0,0,0,0.08)}
+    table.items tbody td{padding:14px 6px;border-bottom:1px dotted rgba(0,0,0,0.06);vertical-align:top}
+    td.amount{text-align:right;white-space:nowrap}
+    .remove-btn{background:#fff;border:1px solid #ccc;color:#444;border-radius:4px;cursor:pointer;padding:2px 6px;font-size:11px;margin-left:4px}
+    .total-row{display:flex;justify-content:flex-end;margin-top:36px;align-items:center}
+    .total-row .label{font-size:22px;font-weight:700;margin-right:18px}
+    .total-row .value{font-size:22px;font-weight:700}
+    .discount-row{display:flex;justify-content:flex-end;margin-top:8px;align-items:center;font-size:16px;color:var(--muted)}
+    .bank{margin-top:48px;border-top:1px dotted rgba(0,0,0,0.08);padding-top:24px}
+    .bank b{display:inline-block;width:130px}
+    .footer{position:absolute;left:0;right:0;bottom:20px;text-align:center;color:var(--muted);font-size:12px}
+    @media (max-width:1000px){.app{flex-direction:column}.panel{width:auto}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="panel">
+      <h2>Invoice controls</h2>
+      <label>Invoice number</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="invoiceNumber" type="number" value="30" min="1" />
+        <button id="incBtn" class="btn-ghost small">+1</button>
+        <button id="resetBtn" class="btn-ghost small">Reset</button>
+      </div>
+      <label>Date</label>
+      <input id="invoiceDate" type="text" value="1/11/2025" />
+      <label>Bill to</label>
+      <input id="billTo" type="text" value="FAO phoenixwindsori" />
+      <label>Pre-populated items</label>
+      <select id="preset" onchange="addPreset()">
+        <option value="">— choose an item —</option>
+        <option value='{"desc":"Management Fee - 65 Walkley Street","price":157.5}'>Management Fee - 65 Walkley Street £157.50</option>
+        <option value='{"desc":"Management Fee - 25 Kirkstone Road","price":157.5}'>Management Fee - 25 Kirkstone Road £157.50</option>
+        <option value='{"desc":"Repair callout - 65 Walkley Street","price":0}'>Repair callout - 65 Walkley Street £0</option>
+        <option value='{"desc":"Repair callout - 25 Kirkstone Road","price":0}'>Repair callout - 25 Kirkstone Road £0</option>
+      </select>
+      <label>Discount %</label>
+      <input id="discount" type="number" value="0" min="0" max="100" />
+      <label>Notes</label>
+      <textarea id="notes">(you can also use this for Paypal if that is preferred payment method)</textarea>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button id="addItemBtn" class="btn-ghost">Add item</button>
+        <button id="clearItems" class="btn-ghost">Clear</button>
+      </div>
+      <label style="margin-top:14px">Export</label>
+      <div style="display:flex;gap:8px">
+        <button id="exportPng">PNG</button>
+        <button id="exportPdf">PDF</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <div id="invoicePage" class="page">
+        <svg class="bgsvg" viewBox="0 0 794 1123" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="0,0 120,0 794,674 674,794" fill="#f3f3f3" opacity="0.9"/>
+          <polygon points="0,120 200,120 794,716 674,836" fill="#efefef" opacity="0.95"/>
+          <polygon points="0,240 300,240 794,740 600,944" fill="#f7f7f7" opacity="0.95"/>
+          <g transform="translate(585,10) scale(0.9)">
+            <polygon points="0,0 16,0 32,16 16,32" fill="#111"/>
+            <polygon points="22,0 38,0 54,16 38,32" fill="#bdbdbd"/>
+            <polygon points="44,16 60,16 76,32 60,48" fill="#d7d7d7"/>
+          </g>
+        </svg>
+        <div class="content" id="contentRoot">
+          <div class="logo">
+            <h1>Thorley Property Ltd.</h1>
+            <div class="company-meta">Registered company: 14853696<br>Churchill College, Cambridge, CB3 0DS</div>
+          </div>
+          <div class="big-title">INVOICE</div>
+          <div class="meta">
+            <div class="left">
+              <div><span class="label">Invoice No:</span> <span id="lblInvoice">00000030</span></div>
+              <div style="margin-top:8px"><span class="label">Bill to:</span> <span id="lblBill">FAO phoenixwindsori</span></div>
+            </div>
+            <div class="right">
+              <div><span class="label">Date:</span> <span id="lblDate">1/11/2025</span></div>
+            </div>
+          </div>
+          <table class="items" id="itemsTable">
+            <thead>
+              <tr>
+                <td style="width:40px">Item</td>
+                <td>Description</td>
+                <td style="width:80px">Qty</td>
+                <td style="width:120px" class="amount">Amount / £</td>
+                <td style="width:50px"></td>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+          <div class="discount-row" id="discountRow" style="display:none"></div>
+          <div class="total-row">
+            <div class="label">Total</div>
+            <div class="value" id="totalValue">£0.00</div>
+          </div>
+          <div class="bank">
+            <div><b>Bank Name:</b> Thorley Property Ltd.</div>
+            <div><b>Bank Account:</b> 04-00-03 &nbsp;&nbsp;73606004</div>
+            <div><b>Bank:</b> Monzo bank</div>
+          </div>
+          <div class="footer" id="footerNotes">
+            Email: thorleyproperty@gmail.com<br>
+            (you can also use this for Paypal if that is preferred payment method)
+          </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    const state = {invoiceNumber:30,date:'1/11/2025',billTo:'FAO phoenixwindsori',items:[{desc:'Custom engraved plant labels. 50*37mm',qty:3,unit:5.99},{desc:'Postage',qty:1,unit:0}],discount:0};
+    const fmt=n=>'£'+Number(n).toFixed(2);
+    function renderInvoice(){
+      document.getElementById('lblInvoice').textContent=String(state.invoiceNumber).padStart(8,'0');
+      document.getElementById('lblDate').textContent=state.date;
+      document.getElementById('lblBill').textContent=state.billTo;
+      const body=document.getElementById('itemsBody');body.innerHTML='';
+      state.items.forEach((it,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${i+1}</td><td><div contenteditable='true' class='desc' data-idx='${i}'>${it.desc}</div></td><td><input type='number' value='${it.qty}' data-idx='${i}' class='qty'/></td><td class='amount'><input type='number' step='0.01' value='${it.unit}' data-idx='${i}' class='price'/></td><td><button class='remove-btn' data-idx='${i}'>✕</button></td>`;
+        body.appendChild(tr);
+      });
+      document.querySelectorAll('.qty').forEach(e=>e.oninput=()=>{state.items[e.dataset.idx].qty=+e.value;recalc();});
+      document.querySelectorAll('.price').forEach(e=>e.oninput=()=>{state.items[e.dataset.idx].unit=+e.value;recalc();});
+      document.querySelectorAll('.desc').forEach(e=>e.oninput=()=>{state.items[e.dataset.idx].desc=e.textContent;});
+      document.querySelectorAll('.remove-btn').forEach(e=>e.onclick=()=>{state.items.splice(e.dataset.idx,1);renderInvoice();});
+      recalc();
+    }
+    function recalc(){
+      let total=0;state.items.forEach(it=>total+=it.qty*it.unit);
+      let disc=state.discount?total*(state.discount/100):0;
+      document.getElementById('discountRow').style.display=state.discount>0?'flex':'none';
+      document.getElementById('discountRow').textContent=state.discount>0?`Discount ${state.discount}% applied: -${fmt(disc)}`:'';
+      document.getElementById('totalValue').textContent=fmt(total-disc);
+    }
+    document.getElementById('invoiceNumber').oninput=e=>{state.invoiceNumber=+e.target.value;renderInvoice();};
+    document.getElementById('invoiceDate').oninput=e=>{state.date=e.target.value;renderInvoice();};
+    document.getElementById('billTo').oninput=e=>{state.billTo=e.target.value;renderInvoice();};
+    document.getElementById('discount').oninput=e=>{state.discount=+e.target.value;recalc();};
+    document.getElementById('incBtn').onclick=()=>{state.invoiceNumber++;document.getElementById('invoiceNumber').value=state.invoiceNumber;renderInvoice();};
+    document.getElementById('resetBtn').onclick=()=>{state.invoiceNumber=1;document.getElementById('invoiceNumber').value=1;renderInvoice();};
+    document.getElementById('addItemBtn').onclick=()=>{state.items.push({desc:'New item',qty:1,unit:0});renderInvoice();};
+    document.getElementById('clearItems').onclick=()=>{if(confirm('Clear all items?')){state.items=[];renderInvoice();}};
+    function addPreset(){const v=document.getElementById('preset').value;if(!v)return;const obj=JSON.parse(v);state.items.push({desc:obj.desc,qty:1,unit:obj.price});renderInvoice();document.getElementById('preset').value='';}
+    async function downloadPng(){const el=document.getElementById('invoicePage');const canvas=await html2canvas(el,{scale:2});canvas.toBlob(b=>{const a=document.createElement('a');a.download=`invoice-${state.invoiceNumber}.png`;a.href=URL.createObjectURL(b);a.click();});}
+    async function downloadPdf(){const el=document.getElementById('invoicePage');const canvas=await html2canvas(el,{scale:2});const imgData=canvas.toDataURL('image/png');const {jsPDF}=window.jspdf;const pdf=new jsPDF({unit:'pt',format:[canvas.width,canvas.height]});pdf.addImage(imgData,'PNG',0,0,canvas.width,canvas.height);pdf.save(`invoice-${state.invoiceNumber}.pdf`);}
+    document.getElementById('exportPng').onclick=downloadPng;document.getElementById('exportPdf').onclick=downloadPdf;
+    renderInvoice();
+  </script>
+</body>
+</html>
